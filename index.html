@@ -1,12 +1,501 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>转播需求任务追踪 · 第六届亚沙会</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>转播需求任务追踪 · 第六届亚沙会</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;background:#f1f5f9;color:#1e293b;}
+    select,input,textarea{font-family:inherit;}
+    ::-webkit-scrollbar{height:6px;width:6px;}
+    ::-webkit-scrollbar-track{background:#f1f5f9;}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+
+const SUPABASE_URL   = "https://eamdgqxedqenqwskwkmq.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhbWRncXhlZHFlbnF3c2t3a21xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMjA4NTcsImV4cCI6MjA4ODg5Njg1N30.jDednixbOhsLuSevf4RJZw_IETBbgbhZxlorEGXqQVg";
+
+const DEPT_COLORS = {
+  "场馆和城市形象部":     { bg:"#dbeafe", text:"#1e40af", border:"#93c5fd" },
+  "信息技术部":           { bg:"#d1fae5", text:"#065f46", border:"#6ee7b7" },
+  "安全保卫部":           { bg:"#fee2e2", text:"#991b1b", border:"#fca5a5" },
+  "体育竞赛部":           { bg:"#fef3c7", text:"#92400e", border:"#fcd34d" },
+  "交通保障部":           { bg:"#ede9fe", text:"#5b21b6", border:"#c4b5fd" },
+  "人力资源和志愿服务部": { bg:"#fce7f3", text:"#9d174d", border:"#f9a8d4" },
+};
+const dc = d => DEPT_COLORS[d] || { bg:"#f1f5f9", text:"#475569", border:"#e2e8f0" };
+
+const STAFF = ["陈雪婧","车平","高天","谢祖涛","兰嘉亮"];
+const STATUS_CFG = {
+  pending:   { label:"待完成", color:"#d97706", bg:"#fffbeb", dot:"#f59e0b", border:"#fde68a" },
+  completed: { label:"已完成", color:"#059669", bg:"#f0fdf4", dot:"#10b981", border:"#bbf7d0" },
+  cancelled: { label:"已中止", color:"#6b7280", bg:"#f9fafb", dot:"#9ca3af", border:"#e5e7eb" },
+};
+
+const RAW = [
+  ["三人篮球","场馆和城市形象部","电力","接点柜点位空开需求及一系列用电需求"],
+  ["三人篮球","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["三人篮球","场馆和城市形象部","灯光","需再次踏勘，检测现场灯光情况"],
+  ["三人篮球","场馆和城市形象部","搭建","需在主看台和FOP场地前搭建共2个摄像机平台"],
+  ["三人篮球","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置"],
+  ["三人篮球","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["三人篮球","安全保卫部","转播车入场","因入场门搭建较早，需明确是否符合转播车驶入条件"],
+  ["沙滩田径","场馆和城市形象部","电力","独立接电柜需求及一系列用电需求"],
+  ["沙滩田径","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["沙滩田径","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["沙滩田径","场馆和城市形象部","搭建","摄像机机位平台搭建，共2个平台"],
+  ["沙滩田径","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置"],
+  ["沙滩田径","场馆和城市形象部","辅助需求","遮阳伞，防滑木制地垫等"],
+  ["沙滩田径","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["沙滩田径","交通保障部","转播车入场","大型车辆上岛时的协助，闸口和路障可能需要拆除"],
+  ["沙滩田径","体育竞赛部","竞赛日程","单元赛程未稳定，请告知单元赛程最终版的时间。现场项目转换时需与转播团队配合，留出转播团队挪机器的时间"],
+  ["沙滩田径","体育竞赛部","颁奖","就颁奖位置需根据日照方位进一步讨论"],
+  ["龙舟","场馆和城市形象部","电力","独立接电柜需求及一系列用电需求"],
+  ["龙舟","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["龙舟","场馆和城市形象部","搭建","转播车停放平台改造"],
+  ["龙舟","场馆和城市形象部","搭建","搭建龙门架用于电缆走线"],
+  ["龙舟","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["龙舟","场馆和城市形象部","搭建","摄像机机位平台搭建，共3个8米平台，正对100米、200米、400米起点"],
+  ["龙舟","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，更新人员流线"],
+  ["龙舟","场馆和城市形象部","辅助需求","遮阳伞等"],
+  ["龙舟","体育竞赛部","竞赛位置","需具体明确长距离比赛的出发点位置"],
+  ["龙舟","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["龙舟","安全保卫部","无人机申请","电视转播需申请无人机用于拍摄"],
+  ["龙舟","安全保卫部","人员流线","需提供快速人工安检通道便于工作人员多次进出"],
+  ["龙舟","体育竞赛部","颁奖","就颁奖位置需进一步讨论"],
+  ["龙舟","人力资源和志愿服务部","志愿者","本场地需要12名志愿者协助电视转播工作"],
+  ["沙滩排球","场馆和城市形象部","电力","一系列用电需求"],
+  ["沙滩排球","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["沙滩排球","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["沙滩排球","场馆和城市形象部","搭建","摄像机机位平台搭建，共2个平台"],
+  ["沙滩排球","场馆和城市形象部","灯光","需再次踏勘，检测现场灯光情况"],
+  ["沙滩排球","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，需设置专用通道使得电视转播人员能及设备快速从转播综合区进入FOP"],
+  ["沙滩排球","场馆和城市形象部","辅助需求","遮阳伞，防滑木制地垫，搭建用梯子等"],
+  ["沙滩排球","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["攀岩","场馆和城市形象部","电力","一系列用电需求"],
+  ["攀岩","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["攀岩","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["攀岩","场馆和城市形象部","搭建","摄像机机位平台搭建，共1个平台，需要独立平台与立柱平行，保证视线不受影响"],
+  ["攀岩","场馆和城市形象部","灯光","需提供灯光报告，安排夜间比赛灯光测试"],
+  ["攀岩","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，更新转播车位置"],
+  ["攀岩","场馆和城市形象部","辅助需求","需提供升降车用于攀岩墙特种摄像机安装"],
+  ["攀岩","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["攀岩","安全保卫部","转播车入场","因部分篷房已搭，阻挡原转播车线路，需调整线路"],
+  ["沙滩手球","场馆和城市形象部","电力","一系列用电需求"],
+  ["沙滩手球","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["沙滩手球","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["沙滩手球","场馆和城市形象部","搭建","摄像机机位平台搭建，共1个平台"],
+  ["沙滩手球","场馆和城市形象部","灯光","需提供灯光照度报告，安排灯光测试"],
+  ["沙滩手球","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，更新转播车位置"],
+  ["沙滩手球","场馆和城市形象部","辅助需求","遮阳伞，防滑木制地垫，搭建用梯子等"],
+  ["沙滩手球","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["沙滩手球","安全保卫部","转播车入场","因部分篷房已搭，阻挡原转播车线路，需调整线路"],
+  ["沙滩手球","体育竞赛部","球门后网","协调是否可以将黑色间隔网改成全白透明网；因场地过道狭小，需现场确认摇臂位置"],
+  ["柔术/沙滩摔跤","场馆和城市形象部","电力","一系列用电需求"],
+  ["柔术/沙滩摔跤","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["柔术/沙滩摔跤","场馆和城市形象部","搭建","需要搭建转播系统的遮阳遮雨棚（集装箱箱体）"],
+  ["柔术/沙滩摔跤","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["柔术/沙滩摔跤","场馆和城市形象部","搭建","摄像机机位平台搭建，共1个平台"],
+  ["柔术/沙滩摔跤","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，更新转播车位置"],
+  ["柔术/沙滩摔跤","场馆和城市形象部","辅助需求","遮阳伞，防滑木制地垫，搭建用梯子（共享）等"],
+  ["柔术/沙滩摔跤","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["柔术/沙滩摔跤","安全保卫部","转播车位置","需协商确认转播系统的位置"],
+  ["柔术/沙滩摔跤","安全保卫部","安保红线","需将转播综合区纳入安保红线"],
+  ["台克球","场馆和城市形象部","电力","一系列用电需求"],
+  ["台克球","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["台克球","场馆和城市形象部","搭建","需要搭建转播系统的遮阳遮雨棚（集装箱箱体）"],
+  ["台克球","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["台克球","场馆和城市形象部","搭建","摄像机机位平台搭建，共1个平台"],
+  ["台克球","场馆和城市形象部","灯光","需再次踏勘，检测现场灯光情况"],
+  ["台克球","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，更新转播车位置；测试赛期间西侧看台距离场地位置狭小，无法放下摄像机，需现场协商留出机位"],
+  ["台克球","场馆和城市形象部","辅助需求","遮阳伞，防滑木制地垫，搭建用梯子（共享）等"],
+  ["台克球","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["台克球","安全保卫部","转播车位置","需协商确认转播系统的位置"],
+  ["台克球","安全保卫部","安保红线","需将转播综合区纳入安保红线"],
+  ["台克球","体育竞赛部","场内裁判位置","需协商请场内裁判站位尽量靠近边线A字板"],
+  ["沙滩足球","场馆和城市形象部","电力","需要独立电视转播接电柜等一系列用电需求"],
+  ["沙滩足球","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["沙滩足球","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["沙滩足球","场馆和城市形象部","搭建","摄像机机位平台搭建，共2个平台"],
+  ["沙滩足球","场馆和城市形象部","灯光","需提供灯光照度报告，安排灯光测试"],
+  ["沙滩足球","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，更新转播车位置"],
+  ["沙滩足球","场馆和城市形象部","辅助需求","遮阳伞，防滑木制地垫，搭建用梯子（共享）等"],
+  ["沙滩足球","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["沙滩足球","安全保卫部","安保红线","需将转播综合区纳入安保红线"],
+  ["游跑两项","场馆和城市形象部","电力","需要独立电视转播接电柜等一系列用电需求"],
+  ["游跑两项","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["游跑两项","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["游跑两项","场馆和城市形象部","搭建","摄像机机位平台搭建，共1个平台，带轮可移动"],
+  ["游跑两项","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，更新转播车位置；转播车停放位位于安保红线外，需将转播综合区纳入流线内并保证转播设备人员进场通道畅通"],
+  ["游跑两项","场馆和城市形象部","辅助需求","遮阳伞等"],
+  ["游跑两项","场馆和城市形象部","辅助需求","需提供拍摄用船只（快艇）一艘"],
+  ["游跑两项","场馆和城市形象部","流线设计","允许转播团队拍摄电瓶车上赛道拍摄跑步运动员"],
+  ["游跑两项","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["游跑两项","安全保卫部","无人机申请","电视转播需申请无人机用于拍摄"],
+  ["游跑两项","交通保障部","道路封闭","需协商比赛期间部分封闭道路的拍摄许可"],
+  ["沙滩卡巴迪","场馆和城市形象部","电力","需要独立电视转播接电柜等一系列用电需求"],
+  ["沙滩卡巴迪","场馆和城市形象部","电力","FOP摄像机供电需求"],
+  ["沙滩卡巴迪","场馆和城市形象部","搭建","转播车开上人行道的坡道辅助"],
+  ["沙滩卡巴迪","场馆和城市形象部","搭建","转播车停放于人行道区域上的承重测试，是否需钢板"],
+  ["沙滩卡巴迪","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["沙滩卡巴迪","场馆和城市形象部","搭建","摄像机机位平台搭建，共2个平台"],
+  ["沙滩卡巴迪","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，更新转播车位置"],
+  ["沙滩卡巴迪","场馆和城市形象部","辅助需求","遮阳伞，防滑木制地垫，搭建用梯子等"],
+  ["沙滩卡巴迪","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["水球","场馆和城市形象部","电力","需要独立电视转播接电柜等一系列用电需求"],
+  ["水球","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
+  ["水球","场馆和城市形象部","搭建","摄像机机位平台搭建，共1个平台"],
+  ["水球","场馆和城市形象部","流线设计","更新摄像机平台及摄像机点位位置，更新转播车位置"],
+  ["水球","场馆和城市形象部","辅助需求","遮阳伞等"],
+  ["水球","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
+  ["水球","体育竞赛部","浮桥","需进一步确认浮桥的使用许可"],
+  ["公开水域游泳","场馆和城市形象部","搭建","可减少电视转播行政办公室，所有需求都不需要板房"],
+  ["公开水域游泳","场馆和城市形象部","辅助需求","需提供拍摄用船只（快艇）一艘"],
+  ["公开水域游泳","安全保卫部","无人机申请","电视转播需申请无人机用于拍摄"],
+  ["帆船","场馆和城市形象部","搭建","可减少电视转播行政办公室，所有需求都不需要板房"],
+  ["帆船","场馆和城市形象部","辅助需求","需提供拍摄用船只（快艇）一艘"],
+  ["帆船","安全保卫部","无人机申请","电视转播需申请无人机用于拍摄"],
+];
+
+const SPORTS_LIST = [...new Set(RAW.map(r=>r[0]))];
+const DEPTS_LIST  = [...new Set(RAW.map(r=>r[1]))];
+
+function sbClient(url, key) {
+  const base = `${url}/rest/v1/broadcast_tasks`;
+  const h = { "Content-Type":"application/json", apikey:key, Authorization:`Bearer ${key}`, Prefer:"return=representation" };
+  return {
+    getAll: () => fetch(`${base}?select=*&order=id.asc`,{headers:h}).then(r=>r.json()),
+    upsert: d  => fetch(base,{method:"POST",headers:{...h,Prefer:"resolution=merge-duplicates,return=representation"},body:JSON.stringify(d)}).then(r=>r.json()),
+    patch:  (id,d) => fetch(`${base}?id=eq.${id}`,{method:"PATCH",headers:h,body:JSON.stringify(d)}).then(r=>r.json()),
+  };
+}
+
+
+
+// ── Responsive hook ──────────────────────────────────────────
+function useIsMobile() {
+  const [mob, setMob] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
+  useEffect(() => {
+    const fn = () => setMob(window.innerWidth < 768);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+  return mob;
+}
+
+// ── App ──────────────────────────────────────────────────────
+function App() {
+  const isMobile = useIsMobile();
+  const [tasks,       setTasks]     = useState([]);
+  const [loading,     setLoading]   = useState(true);
+  const [connected,   setConn]      = useState(false);
+  const [fSport,      setFSport]    = useState("全部");
+  const [fDept,       setFDept]     = useState("全部");
+  const [fStatus,     setFStatus]   = useState("全部");
+  const [fStaff,      setFStaff]    = useState("全部");
+  const [editId,      setEditId]    = useState(null);
+  const [editData,    setEditData]  = useState({});
+  const [saving,      setSaving]    = useState(false);
+  const [expanded,    setExpanded]  = useState(null);
+
+  const sb = sbClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  useEffect(() => { load(); }, []);
+
+  async function load() {
+    setLoading(true);
+    const seed = RAW.map((r,i) => ({ id:i+1, sport:r[0], dept:r[1], category:r[2], detail:r[3], status:"pending", responsible_person:"", notes:"", deadline:"" }));
+    try {
+      const data = await sb.getAll();
+      if (Array.isArray(data) && data.length > 0) { setTasks(data); setConn(true); }
+      else {
+        const ins = await sb.upsert(seed.map(({id:_,...r})=>r));
+        if (Array.isArray(ins)) { setTasks(ins); setConn(true); } else throw 0;
+      }
+    } catch { setTasks(seed); setConn(false); }
+    setLoading(false);
+  }
+
+  const statusMap = { "待完成":"pending","已完成":"completed","已中止":"cancelled" };
+  const filtered = tasks.filter(t =>
+    (fSport  ==="全部" || t.sport===fSport) &&
+    (fDept   ==="全部" || t.dept===fDept)   &&
+    (fStatus ==="全部" || t.status===statusMap[fStatus]) &&
+    (fStaff  ==="全部" || t.responsible_person===fStaff)
+  );
+
+  const stats = {
+    total: tasks.length,
+    pending:   tasks.filter(t=>t.status==="pending").length,
+    completed: tasks.filter(t=>t.status==="completed").length,
+    cancelled: tasks.filter(t=>t.status==="cancelled").length,
+  };
+
+  function startEdit(t) {
+    setEditId(t.id);
+    setEditData({ status:t.status, responsible_person:t.responsible_person||"", notes:t.notes||"", deadline:t.deadline||"" });
+  }
+  async function saveEdit(task) {
+    setSaving(true);
+    if (connected) await sb.patch(task.id, {...editData, updated_at: new Date().toISOString()});
+    setTasks(prev => prev.map(t => t.id===task.id ? {...t,...editData} : t));
+    setEditId(null); setSaving(false);
+  }
+
+  const inp = (val, onChange, extra={}) => (
+    <input value={val} onChange={e=>onChange(e.target.value)} style={{...inputSt,...extra}} />
+  );
+
+  return (
+    <div style={{ fontFamily:"'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif", background:"#f1f5f9", minHeight:"100vh", color:"#1e293b" }}>
+
+      {/* HEADER */}
+      <div style={{ background:"#fff", borderBottom:"2px solid #e2e8f0", padding: isMobile?"12px 14px":"16px 24px" }}>
+        <div style={{ maxWidth:1800, margin:"0 auto" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
+            <div>
+              <div style={{ fontSize:11, letterSpacing:3, color:"#94a3b8", marginBottom:3 }}>第六届亚洲沙滩运动会 · 主播机构二次考察跟进台账</div>
+              <h1 style={{ margin:0, fontSize: isMobile?17:21, fontWeight:700, color:"#0f172a" }}>转播需求任务追踪</h1>
+            </div>
+            <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+              <div style={{ display:"flex", gap:6 }}>
+                {[{l:"待完成",v:stats.pending,c:"#d97706",bg:"#fffbeb"},{l:"已完成",v:stats.completed,c:"#059669",bg:"#f0fdf4"},{l:"已中止",v:stats.cancelled,c:"#6b7280",bg:"#f9fafb"}].map(s=>(
+                  <div key={s.l} style={{ background:s.bg, border:`1px solid ${s.c}40`, borderRadius:9, padding: isMobile?"5px 10px":"6px 14px", textAlign:"center" }}>
+                    <div style={{ fontSize: isMobile?17:20, fontWeight:700, color:s.c, lineHeight:1.1 }}>{s.v}</div>
+                    <div style={{ fontSize:11, color:s.c }}>{s.l}</div>
+                  </div>
+                ))}
+              </div>
+
+
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+
+      {/* DEPT LEGEND */}
+      <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding: isMobile?"8px 14px":"8px 24px" }}>
+        <div style={{ maxWidth:1800, margin:"0 auto", display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
+          <span style={{ fontSize:12, color:"#94a3b8", marginRight:2 }}>部门色标</span>
+          {Object.entries(DEPT_COLORS).map(([d,c])=>(
+            <span key={d} style={{ background:c.bg, color:c.text, border:`1px solid ${c.border}`, borderRadius:20, padding:"2px 9px", fontSize:11, fontWeight:500 }}>{d}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* FILTERS */}
+      <div style={{ background:"#fff", borderBottom:"1px solid #e2e8f0", padding: isMobile?"10px 14px":"10px 24px" }}>
+        <div style={{ maxWidth:1800, margin:"0 auto" }}>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+            <span style={{ fontSize:12, color:"#94a3b8" }}>筛选</span>
+            <FSel label="赛种"  value={fSport}  onChange={setFSport}  opts={["全部",...SPORTS_LIST]} />
+            <FSel label="部门"  value={fDept}   onChange={setFDept}   opts={["全部",...DEPTS_LIST]} />
+            <FSel label="状态"  value={fStatus} onChange={setFStatus} opts={["全部","待完成","已完成","已中止"]} />
+            <FSel label="负责人" value={fStaff} onChange={setFStaff}  opts={["全部",...STAFF]} />
+            <span style={{ fontSize:12, color:"#94a3b8", marginLeft:"auto" }}>共 <b>{filtered.length}</b> 条</span>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <div style={{ maxWidth:1800, margin:"0 auto", padding: isMobile?"12px 10px":"16px 24px" }}>
+        {loading ? (
+          <div style={{ textAlign:"center",padding:80,color:"#94a3b8" }}>加载中…</div>
+        ) : isMobile ? (
+          /* ── MOBILE CARDS ── */
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            {filtered.map(task=>{
+              const sc   = STATUS_CFG[task.status]||STATUS_CFG.pending;
+              const dpc  = dc(task.dept);
+              const isE  = editId===task.id;
+              const open = expanded===task.id;
+              return (
+                <div key={task.id} style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0", overflow:"hidden", boxShadow:"0 1px 3px #0001" }}>
+                  <div style={{ padding:"12px 14px", cursor:"pointer" }} onClick={()=>{ setExpanded(open?null:task.id); if(!open) setEditId(null); }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", gap:10 }}>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ display:"flex", gap:5, flexWrap:"wrap", marginBottom:6 }}>
+                          <span style={{ background:"#f1f5f9",color:"#334155",borderRadius:5,padding:"2px 8px",fontSize:12,fontWeight:600 }}>{task.sport}</span>
+                          <span style={{ background:dpc.bg,color:dpc.text,border:`1px solid ${dpc.border}`,borderRadius:20,padding:"2px 8px",fontSize:12,fontWeight:500 }}>{task.dept}</span>
+                          <span style={{ background:"#f8fafc",color:"#64748b",borderRadius:5,padding:"2px 7px",fontSize:11 }}>{task.category}</span>
+                        </div>
+                        <div style={{ fontSize:14,color:"#1e293b",lineHeight:1.55 }}>{task.detail}</div>
+                      </div>
+                      <div style={{ display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5,flexShrink:0 }}>
+                        <span style={{ background:sc.bg,color:sc.color,border:`1px solid ${sc.border}`,borderRadius:20,padding:"2px 9px",fontSize:12,fontWeight:500,whiteSpace:"nowrap" }}>
+                          <span style={{ display:"inline-block",width:5,height:5,borderRadius:"50%",background:sc.dot,marginRight:4,verticalAlign:"middle" }}/>
+                          {sc.label}
+                        </span>
+                        {task.responsible_person && <span style={{ fontSize:12,color:"#64748b" }}>👤{task.responsible_person}</span>}
+                        <span style={{ fontSize:13,color:"#cbd5e1" }}>{open?"▲":"▼"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {open && (
+                    <div style={{ borderTop:"1px solid #f1f5f9",padding:"12px 14px",background:"#fafbfc" }}>
+                      {isE ? (
+                        <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+                          <FL label="状态">
+                            <select value={editData.status} onChange={e=>setEditData(p=>({...p,status:e.target.value}))} style={{...selSt,width:"100%"}}>
+                              <option value="pending">待完成</option><option value="completed">已完成</option><option value="cancelled">已中止</option>
+                            </select>
+                          </FL>
+                          <FL label="负责人">
+                            <select value={editData.responsible_person} onChange={e=>setEditData(p=>({...p,responsible_person:e.target.value}))} style={{...selSt,width:"100%"}}>
+                              <option value="">未分配</option>{STAFF.map(s=><option key={s}>{s}</option>)}
+                            </select>
+                          </FL>
+                          <FL label="截止日期">
+                            <input type="date" value={editData.deadline} onChange={e=>setEditData(p=>({...p,deadline:e.target.value}))} style={{...inputSt,width:"100%",boxSizing:"border-box"}}/>
+                          </FL>
+                          <FL label="备注/跟进记录">
+                            <textarea value={editData.notes} onChange={e=>setEditData(p=>({...p,notes:e.target.value}))}
+                              placeholder="填写跟进记录…" rows={3} style={{...inputSt,width:"100%",resize:"vertical",boxSizing:"border-box"}}/>
+                          </FL>
+                          <div style={{ display:"flex",gap:8 }}>
+                            <button onClick={()=>saveEdit(task)} disabled={saving} style={{ flex:1,background:"#3b82f6",color:"#fff",border:"none",borderRadius:8,padding:"11px",cursor:"pointer",fontSize:14,fontWeight:600 }}>{saving?"保存中…":"保存"}</button>
+                            <button onClick={()=>setEditId(null)} style={{ flex:1,background:"#f1f5f9",color:"#64748b",border:"1px solid #e2e8f0",borderRadius:8,padding:"11px",cursor:"pointer",fontSize:14 }}>取消</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+                            <IC label="负责人" value={task.responsible_person||"—"} />
+                            <IC label="截止日期" value={task.deadline||"—"} />
+                          </div>
+                          <IC label="备注/跟进记录" value={task.notes||"—"} />
+                          <button onClick={()=>startEdit(task)} style={{ marginTop:4,background:"#eff6ff",color:"#3b82f6",border:"1px solid #bfdbfe",borderRadius:8,padding:"10px",cursor:"pointer",fontSize:14,fontWeight:500 }}>编辑此任务</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {filtered.length===0 && <div style={{ textAlign:"center",padding:60,color:"#94a3b8" }}>暂无符合条件的任务</div>}
+          </div>
+        ) : (
+          /* ── DESKTOP TABLE ── */
+          <div style={{ background:"#fff", borderRadius:12, border:"1px solid #e2e8f0", overflow:"hidden", boxShadow:"0 1px 4px #0001" }}>
+            <div style={{ overflowX:"auto" }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+                <thead>
+                  <tr style={{ background:"#f8fafc", borderBottom:"2px solid #e2e8f0" }}>
+                    {["赛种","协调部门","科目","具体内容","状态","负责人","截止日期","备注 / 跟进记录","操作"].map(h=>(
+                      <th key={h} style={{ padding:"11px 14px",textAlign:"left",color:"#64748b",fontWeight:600,fontSize:12,whiteSpace:"nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((task,idx)=>{
+                    const isE = editId===task.id;
+                    const sc  = STATUS_CFG[task.status]||STATUS_CFG.pending;
+                    const dpc = dc(task.dept);
+                    return (
+                      <tr key={task.id} style={{ borderBottom:"1px solid #f1f5f9", background:idx%2===0?"#fff":"#fafbfc", verticalAlign:"top" }}>
+                        <td style={{ padding:"10px 14px",whiteSpace:"nowrap",fontWeight:500,color:"#334155" }}>{task.sport}</td>
+                        <td style={{ padding:"10px 14px",whiteSpace:"nowrap" }}>
+                          <span style={{ background:dpc.bg,color:dpc.text,border:`1px solid ${dpc.border}`,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:500 }}>{task.dept}</span>
+                        </td>
+                        <td style={{ padding:"10px 14px",whiteSpace:"nowrap",color:"#64748b" }}>{task.category}</td>
+                        <td style={{ padding:"10px 14px",color:"#334155",lineHeight:1.6,minWidth:260,maxWidth:420 }}>{task.detail}</td>
+                        <td style={{ padding:"10px 14px",whiteSpace:"nowrap" }}>
+                          {isE ? (
+                            <select value={editData.status} onChange={e=>setEditData(p=>({...p,status:e.target.value}))} style={selSt}>
+                              <option value="pending">待完成</option><option value="completed">已完成</option><option value="cancelled">已中止</option>
+                            </select>
+                          ) : (
+                            <span style={{ background:sc.bg,color:sc.color,border:`1px solid ${sc.border}`,borderRadius:20,padding:"3px 10px",fontSize:12,fontWeight:500 }}>
+                              <span style={{ display:"inline-block",width:6,height:6,borderRadius:"50%",background:sc.dot,marginRight:5,verticalAlign:"middle" }}/>
+                              {sc.label}
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding:"10px 14px",whiteSpace:"nowrap" }}>
+                          {isE ? (
+                            <select value={editData.responsible_person} onChange={e=>setEditData(p=>({...p,responsible_person:e.target.value}))} style={selSt}>
+                              <option value="">未分配</option>{STAFF.map(s=><option key={s}>{s}</option>)}
+                            </select>
+                          ) : (
+                            <span style={{ color:task.responsible_person?"#1e293b":"#cbd5e1" }}>{task.responsible_person||"—"}</span>
+                          )}
+                        </td>
+                        <td style={{ padding:"10px 14px",whiteSpace:"nowrap" }}>
+                          {isE ? (
+                            <input type="date" value={editData.deadline} onChange={e=>setEditData(p=>({...p,deadline:e.target.value}))} style={{...inputSt,width:130}}/>
+                          ) : (
+                            <span style={{ color:task.deadline?"#d97706":"#cbd5e1" }}>{task.deadline||"—"}</span>
+                          )}
+                        </td>
+                        <td style={{ padding:"10px 14px",minWidth:240,maxWidth:360 }}>
+                          {isE ? (
+                            <textarea value={editData.notes} onChange={e=>setEditData(p=>({...p,notes:e.target.value}))}
+                              placeholder="填写跟进记录…" rows={2}
+                              style={{...inputSt,width:"100%",resize:"vertical",boxSizing:"border-box",minWidth:200}}/>
+                          ) : (
+                            <span style={{ color:task.notes?"#334155":"#cbd5e1",lineHeight:1.5 }}>{task.notes||"—"}</span>
+                          )}
+                        </td>
+                        <td style={{ padding:"10px 14px",whiteSpace:"nowrap" }}>
+                          {isE ? (
+                            <div style={{ display:"flex",gap:6 }}>
+                              <button onClick={()=>saveEdit(task)} disabled={saving} style={{ background:"#3b82f6",color:"#fff",border:"none",borderRadius:6,padding:"5px 14px",cursor:"pointer",fontSize:12,fontWeight:600 }}>{saving?"…":"保存"}</button>
+                              <button onClick={()=>setEditId(null)} style={{ background:"#f1f5f9",color:"#64748b",border:"1px solid #e2e8f0",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12 }}>取消</button>
+                            </div>
+                          ) : (
+                            <button onClick={()=>startEdit(task)} style={{ background:"#f8fafc",color:"#3b82f6",border:"1px solid #bfdbfe",borderRadius:6,padding:"5px 13px",cursor:"pointer",fontSize:12 }}>编辑</button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filtered.length===0 && <div style={{ textAlign:"center",padding:60,color:"#94a3b8" }}>暂无符合条件的任务</div>}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FSel({ label, value, onChange, opts }) {
+  return (
+    <div style={{ display:"flex",alignItems:"center",gap:5 }}>
+      <span style={{ fontSize:12,color:"#94a3b8",whiteSpace:"nowrap" }}>{label}</span>
+      <select value={value} onChange={e=>onChange(e.target.value)} style={selSt}>{opts.map(o=><option key={o}>{o}</option>)}</select>
+    </div>
+  );
+}
+function SmBtn({ onClick, children }) {
+  return <button onClick={onClick} style={{ background:"#f1f5f9",color:"#64748b",border:"1px solid #e2e8f0",borderRadius:7,padding:"6px 12px",cursor:"pointer",fontSize:12 }}>{children}</button>;
+}
+function FL({ label, children }) {
+  return <div><div style={{ fontSize:11,color:"#94a3b8",marginBottom:4,fontWeight:600 }}>{label}</div>{children}</div>;
+}
+function IC({ label, value }) {
+  return (
+    <div style={{ background:"#fff",borderRadius:8,padding:"8px 10px",border:"1px solid #e2e8f0" }}>
+      <div style={{ fontSize:11,color:"#94a3b8",marginBottom:2 }}>{label}</div>
+      <div style={{ fontSize:13,color:value==="—"?"#cbd5e1":"#334155",lineHeight:1.5 }}>{value}</div>
+    </div>
+  );
+}
+
+const selSt   = { background:"#fff",border:"1px solid #e2e8f0",borderRadius:7,padding:"6px 10px",color:"#334155",fontSize:13,cursor:"pointer",outline:"none" };
+const inputSt = { background:"#fff",border:"1px solid #e2e8f0",borderRadius:7,padding:"7px 10px",color:"#334155",fontSize:13,outline:"none" };
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
 </html>
