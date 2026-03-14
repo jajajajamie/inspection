@@ -178,7 +178,6 @@ function App(){
     setEditId(null);setSaving(false);
   }
 
-  // ── Stat cards ──
   const statCards=H("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
     [{l:"待完成",v:stats.pending,c:"#d97706",bg:"#fffbeb"},
      {l:"已完成",v:stats.completed,c:"#059669",bg:"#f0fdf4"},
@@ -232,7 +231,6 @@ function App(){
     )
   );
 
-  // ── Mobile cards ──
   function renderMobile(){
     if(!filtered.length)return[H("div",{key:"empty",style:{textAlign:"center",padding:60,color:"#94a3b8"}},"暂无符合条件的任务")];
     return filtered.map(task=>{
@@ -263,22 +261,18 @@ function App(){
         open&&H("div",{style:{borderTop:"1px solid #f1f5f9",padding:"12px 14px",background:"#fafbfc"}},
           isE
           ?H("div",{style:{display:"flex",flexDirection:"column",gap:10}},
-              H("div",null,
-                H("div",{style:{fontSize:11,color:"#94a3b8",marginBottom:4,fontWeight:600}},"状态"),
+              H("div",null,H("div",{style:{fontSize:11,color:"#94a3b8",marginBottom:4,fontWeight:600}},"状态"),
                 H("select",{value:editData.status,onChange:e=>setEditData(p=>({...p,status:e.target.value})),style:{...selSt,width:"100%"}},
                   H("option",{value:"pending"},"待完成"),H("option",{value:"completed"},"已完成"),H("option",{value:"cancelled"},"已中止")
                 )
               ),
-              H("div",null,
-                H("div",{style:{fontSize:11,color:"#94a3b8",marginBottom:4,fontWeight:600}},"截止日期"),
+              H("div",null,H("div",{style:{fontSize:11,color:"#94a3b8",marginBottom:4,fontWeight:600}},"截止日期"),
                 H("input",{type:"date",value:editData.deadline,onChange:e=>setEditData(p=>({...p,deadline:e.target.value})),style:{...inpSt,width:"100%",boxSizing:"border-box"}})
               ),
-              H("div",null,
-                H("div",{style:{fontSize:12,color:"#3b82f6",marginBottom:4,fontWeight:600}},"跟进记录 · Jamie"),
+              H("div",null,H("div",{style:{fontSize:12,color:"#3b82f6",marginBottom:4,fontWeight:600}},"跟进记录 · Jamie"),
                 H("textarea",{value:editData.jamie_notes,onChange:e=>setEditData(p=>({...p,jamie_notes:e.target.value})),placeholder:"Jamie 填写…",rows:3,style:{...inpSt,width:"100%",resize:"vertical",boxSizing:"border-box"}})
               ),
-              H("div",null,
-                H("div",{style:{fontSize:12,color:"#7c3aed",marginBottom:4,fontWeight:600}},"跟进记录 · Lan"),
+              H("div",null,H("div",{style:{fontSize:12,color:"#7c3aed",marginBottom:4,fontWeight:600}},"跟进记录 · Lan"),
                 H("textarea",{value:editData.lan_notes,onChange:e=>setEditData(p=>({...p,lan_notes:e.target.value})),placeholder:"Lan 填写…",rows:3,style:{...inpSt,width:"100%",resize:"vertical",boxSizing:"border-box"}})
               ),
               H("div",{style:{display:"flex",gap:8}},
@@ -308,7 +302,6 @@ function App(){
     });
   }
 
-  // ── Desktop table ──
   function renderDesktop(){
     return H("div",{style:{background:"#fff",borderRadius:12,border:"1px solid #e2e8f0",overflow:"hidden",boxShadow:"0 1px 4px #0001"}},
       H("div",{style:{overflowX:"auto"}},
@@ -381,7 +374,7 @@ function App(){
   }
 
   return H("div",{style:{background:"#f1f5f9",minHeight:"100vh"}},
-    header, legend, filters,
+    header,legend,filters,
     H("div",{style:{maxWidth:1800,margin:"0 auto",padding:mob?"12px 10px":"16px 24px"}},
       loading
       ?H("div",{style:{textAlign:"center",padding:80,color:"#94a3b8"}},"加载中…")
