@@ -29,7 +29,8 @@ const DEPT_COLORS={
   "安全保卫部":{bg:"#fee2e2",text:"#991b1b",border:"#fca5a5"},
   "体育竞赛部":{bg:"#fef3c7",text:"#92400e",border:"#fcd34d"},
   "交通保障部":{bg:"#ede9fe",text:"#5b21b6",border:"#c4b5fd"},
-  "人力资源和志愿服务部":{bg:"#fce7f3",text:"#9d174d",border:"#f9a8d4"}
+  "人力资源和志愿服务部":{bg:"#fce7f3",text:"#9d174d",border:"#f9a8d4"},
+  "主播机构":{bg:"#fef9c3",text:"#854d0e",border:"#fde047"}
 };
 const dc=d=>DEPT_COLORS[d]||{bg:"#f1f5f9",text:"#475569",border:"#e2e8f0"};
 
@@ -143,7 +144,7 @@ function App(){
 
   async function load(){
     setLoading(true);
-    const seed=RAW.map((r,i)=>({id:i+1,sport:r[0],dept:r[1],category:r[2],detail:r[3],status:"pending",jamie_notes:"",lan_notes:"",deadline:""}));
+    const seed=RAW.map((r,i)=>({id:i+1,sport:r[0],dept:r[1],category:r[2],detail:r[3],status:"pending",jamie_notes:"",lan_notes:"",deadline:"",equipment_date:"",power_date:""}));
     try{
       const data=await sb.getAll();
       if(Array.isArray(data)&&data.length>0){setTasks(data);setConn(true);}
@@ -169,7 +170,7 @@ function App(){
 
   function startEdit(t){
     setEditId(t.id);
-    setEditData({status:t.status,jamie_notes:t.jamie_notes||"",lan_notes:t.lan_notes||"",deadline:t.deadline||"",dept:t.dept||"",detail:t.detail||""});
+    setEditData({status:t.status,jamie_notes:t.jamie_notes||"",lan_notes:t.lan_notes||"",deadline:t.deadline||"",dept:t.dept||"",detail:t.detail||"",equipment_date:t.equipment_date||"",power_date:t.power_date||""});
   }
   async function saveEdit(task){
     setSaving(true);
@@ -281,6 +282,14 @@ function App(){
                 H("input",{type:"date",value:editData.deadline,onChange:e=>setEditData(p=>({...p,deadline:e.target.value})),style:{...inpSt,width:"100%",boxSizing:"border-box"}})
               ),
               H("div",null,
+                H("div",{style:{fontSize:11,color:"#059669",marginBottom:4,fontWeight:600}},"设备进场时间"),
+                H("input",{type:"date",value:editData.equipment_date,onChange:e=>setEditData(p=>({...p,equipment_date:e.target.value})),style:{...inpSt,width:"100%",boxSizing:"border-box"}})
+              ),
+              H("div",null,
+                H("div",{style:{fontSize:11,color:"#7c3aed",marginBottom:4,fontWeight:600}},"开始供电时间"),
+                H("input",{type:"date",value:editData.power_date,onChange:e=>setEditData(p=>({...p,power_date:e.target.value})),style:{...inpSt,width:"100%",boxSizing:"border-box"}})
+              ),
+              H("div",null,
                 H("div",{style:{fontSize:12,color:"#3b82f6",marginBottom:4,fontWeight:600}},"跟进记录 · Jamie"),
                 H("textarea",{value:editData.jamie_notes,onChange:e=>setEditData(p=>({...p,jamie_notes:e.target.value})),placeholder:"Jamie 填写…",rows:3,style:{...inpSt,width:"100%",resize:"vertical",boxSizing:"border-box"}})
               ),
@@ -304,9 +313,19 @@ function App(){
                   H("div",{style:{fontSize:13,color:task.lan_notes?"#334155":"#cbd5e1",lineHeight:1.5}},task.lan_notes||"—")
                 )
               ),
-              H("div",{style:{background:"#fff",borderRadius:8,padding:"8px 10px",border:"1px solid #e2e8f0"}},
-                H("div",{style:{fontSize:11,color:"#94a3b8",marginBottom:2}},"截止日期"),
-                H("div",{style:{fontSize:13,color:task.deadline?"#d97706":"#cbd5e1"}},task.deadline||"—")
+              H("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+                H("div",{style:{background:"#fff",borderRadius:8,padding:"8px 10px",border:"1px solid #e2e8f0"}},
+                  H("div",{style:{fontSize:11,color:"#94a3b8",marginBottom:2}},"截止日期"),
+                  H("div",{style:{fontSize:13,color:task.deadline?"#d97706":"#cbd5e1"}},task.deadline||"—")
+                ),
+                H("div",{style:{background:"#fff",borderRadius:8,padding:"8px 10px",border:"1px solid #d1fae5"}},
+                  H("div",{style:{fontSize:11,color:"#059669",marginBottom:2}},"设备进场"),
+                  H("div",{style:{fontSize:13,color:task.equipment_date?"#059669":"#cbd5e1"}},task.equipment_date||"—")
+                )
+              ),
+              H("div",{style:{background:"#fff",borderRadius:8,padding:"8px 10px",border:"1px solid #ede9fe"}},
+                H("div",{style:{fontSize:11,color:"#7c3aed",marginBottom:2}},"开始供电"),
+                H("div",{style:{fontSize:13,color:task.power_date?"#7c3aed":"#cbd5e1"}},task.power_date||"—")
               ),
               H("button",{onClick:()=>startEdit(task),style:{marginTop:4,background:"#eff6ff",color:"#3b82f6",border:"1px solid #bfdbfe",borderRadius:8,padding:"10px",cursor:"pointer",fontSize:14,fontWeight:500}},"编辑此任务")
             )
@@ -322,20 +341,20 @@ function App(){
         H("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
           H("thead",null,
             H("tr",{style:{background:"#f8fafc",borderBottom:"2px solid #e2e8f0"}},
-              ["赛种","协调部门","科目","具体内容","状态","截止日期","跟进记录 · Jamie","跟进记录 · Lan","操作"].map((h,i)=>
-                H("th",{key:h,style:{padding:"11px 14px",textAlign:"left",color:i===6?"#3b82f6":i===7?"#7c3aed":"#64748b",fontWeight:600,fontSize:12,whiteSpace:"nowrap"}},h)
+              ["赛种","协调部门","科目","具体内容","状态","截止日期","设备进场","开始供电","跟进记录 · Jamie","跟进记录 · Lan","操作"].map((h,i)=>
+                H("th",{key:h,style:{padding:"11px 14px",textAlign:"left",color:i===8?"#3b82f6":i===9?"#7c3aed":"#64748b",fontWeight:600,fontSize:12,whiteSpace:"nowrap"}},h)
               )
             )
           ),
           H("tbody",null,
             filtered.length===0
-            ?H("tr",null,H("td",{colSpan:9,style:{textAlign:"center",padding:60,color:"#94a3b8"}},"暂无符合条件的任务"))
+            ?H("tr",null,H("td",{colSpan:11,style:{textAlign:"center",padding:60,color:"#94a3b8"}},"暂无符合条件的任务"))
             :filtered.map((task,idx)=>{
               const isE=editId===task.id;
               const sc=STATUS_CFG[task.status]||STATUS_CFG.pending;
               const dpc=dc(task.dept);
               const isOther=task.category==="其他";
-              return H("tr",{key:task.id,style:{borderBottom:"1px solid #f1f5f9",background:isOther?"#fffbeb":idx%2===0?"#fff":"#fafbfc",verticalAlign:"top"}},
+              return H("tr",{key:task.id,style:{borderBottom:"1px solid #f1f5f9",background:task.dept==="主播机构"?"#fef08a":isOther?"#fffbeb":idx%2===0?"#fff":"#fafbfc",verticalAlign:"top"}},
                 H("td",{style:{padding:"10px 14px",whiteSpace:"nowrap",fontWeight:500,color:"#334155"}},task.sport),
                 H("td",{style:{padding:"10px 14px",whiteSpace:"nowrap"}},
                   isE&&isOther
@@ -364,6 +383,16 @@ function App(){
                   isE
                   ?H("input",{type:"date",value:editData.deadline,onChange:e=>setEditData(p=>({...p,deadline:e.target.value})),style:{...inpSt,width:130}})
                   :H("span",{style:{color:task.deadline?"#d97706":"#cbd5e1"}},task.deadline||"—")
+                ),
+                H("td",{style:{padding:"10px 14px",whiteSpace:"nowrap"}},
+                  isE
+                  ?H("input",{type:"date",value:editData.equipment_date,onChange:e=>setEditData(p=>({...p,equipment_date:e.target.value})),style:{...inpSt,width:130}})
+                  :H("span",{style:{color:task.equipment_date?"#059669":"#cbd5e1"}},task.equipment_date||"—")
+                ),
+                H("td",{style:{padding:"10px 14px",whiteSpace:"nowrap"}},
+                  isE
+                  ?H("input",{type:"date",value:editData.power_date,onChange:e=>setEditData(p=>({...p,power_date:e.target.value})),style:{...inpSt,width:130}})
+                  :H("span",{style:{color:task.power_date?"#7c3aed":"#cbd5e1"}},task.power_date||"—")
                 ),
                 H("td",{style:{padding:"10px 14px",minWidth:180,maxWidth:300,borderLeft:"2px solid #dbeafe"}},
                   isE
