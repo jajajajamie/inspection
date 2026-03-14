@@ -6,6 +6,7 @@
 <title>转播需求任务追踪 · 第六届亚沙会</title>
 <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;background:#f1f5f9;color:#1e293b}
@@ -40,8 +41,7 @@ const STATUS_CFG={
   cancelled:{label:"已中止",color:"#6b7280",bg:"#f9fafb",dot:"#9ca3af",border:"#e5e7eb"}
 };
 
-const RAW=[
-  ["三人篮球","场馆和城市形象部","电力","接点柜点位空开需求及一系列用电需求"],
+const RAW=[["三人篮球","场馆和城市形象部","电力","接点柜点位空开需求及一系列用电需求"],
   ["三人篮球","场馆和城市形象部","电力","FOP摄像机供电需求"],
   ["三人篮球","场馆和城市形象部","灯光","需再次踏勘，检测现场灯光情况"],
   ["三人篮球","场馆和城市形象部","搭建","需在主看台和FOP场地前搭建共2个摄像机平台"],
@@ -49,6 +49,8 @@ const RAW=[
   ["三人篮球","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
   ["三人篮球","安全保卫部","转播车入场","因入场门搭建较早，需明确是否符合转播车驶入条件"],
   ["三人篮球","场馆和城市形象部","其他",""],
+  ["三人篮球","主播机构","设备进场时间",""],
+  ["三人篮球","主播机构","开始供电时间",""],
   ["沙滩田径","场馆和城市形象部","电力","独立接电柜需求及一系列用电需求"],
   ["沙滩田径","场馆和城市形象部","电力","FOP摄像机供电需求"],
   ["沙滩田径","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
@@ -60,6 +62,8 @@ const RAW=[
   ["沙滩田径","体育竞赛部","竞赛日程","单元赛程未稳定，请告知单元赛程最终版的时间。现场项目转换时需与转播团队配合，留出转播团队挪机器的时间"],
   ["沙滩田径","体育竞赛部","颁奖","就颁奖位置需根据日照方位进一步讨论"],
   ["沙滩田径","场馆和城市形象部","其他",""],
+  ["沙滩田径","主播机构","设备进场时间",""],
+  ["沙滩田径","主播机构","开始供电时间",""],
   ["龙舟","场馆和城市形象部","电力","独立接电柜需求及一系列用电需求"],
   ["龙舟","场馆和城市形象部","电力","FOP摄像机供电需求"],
   ["龙舟","场馆和城市形象部","搭建","转播车停放平台改造"],
@@ -75,6 +79,8 @@ const RAW=[
   ["龙舟","体育竞赛部","颁奖","就颁奖位置需进一步讨论"],
   ["龙舟","人力资源和志愿服务部","志愿者","本场地需要12名志愿者协助电视转播工作"],
   ["龙舟","场馆和城市形象部","其他",""],
+  ["龙舟","主播机构","设备进场时间",""],
+  ["龙舟","主播机构","开始供电时间",""],
   ["沙滩卡巴迪","场馆和城市形象部","电力","需要独立电视转播接电柜等一系列用电需求"],
   ["沙滩卡巴迪","场馆和城市形象部","电力","FOP摄像机供电需求"],
   ["沙滩卡巴迪","场馆和城市形象部","搭建","转播车开上人行道的坡道辅助"],
@@ -85,6 +91,8 @@ const RAW=[
   ["沙滩卡巴迪","场馆和城市形象部","辅助需求","遮阳伞，防滑木制地垫，搭建用梯子等"],
   ["沙滩卡巴迪","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
   ["沙滩卡巴迪","场馆和城市形象部","其他",""],
+  ["沙滩卡巴迪","主播机构","设备进场时间",""],
+  ["沙滩卡巴迪","主播机构","开始供电时间",""],
   ["水球","场馆和城市形象部","电力","需要独立电视转播接电柜等一系列用电需求"],
   ["水球","场馆和城市形象部","搭建","电视转播设备间和转播机房的板房需求"],
   ["水球","场馆和城市形象部","搭建","摄像机机位平台搭建，共1个平台"],
@@ -93,19 +101,79 @@ const RAW=[
   ["水球","信息技术部","传输/网络","TOC搭建等一系列相关需求"],
   ["水球","体育竞赛部","浮桥","需进一步确认浮桥的使用许可"],
   ["水球","场馆和城市形象部","其他",""],
+  ["水球","主播机构","设备进场时间",""],
+  ["水球","主播机构","开始供电时间",""],
   ["公开水域游泳","场馆和城市形象部","搭建","可减少电视转播行政办公室，所有需求都不需要板房"],
   ["公开水域游泳","场馆和城市形象部","辅助需求","需提供拍摄用船只（快艇）一艘"],
   ["公开水域游泳","安全保卫部","无人机申请","电视转播需申请无人机用于拍摄"],
   ["公开水域游泳","场馆和城市形象部","其他",""],
+  ["公开水域游泳","主播机构","设备进场时间",""],
+  ["公开水域游泳","主播机构","开始供电时间",""],
   ["帆船","场馆和城市形象部","搭建","可减少电视转播行政办公室，所有需求都不需要板房"],
   ["帆船","场馆和城市形象部","辅助需求","需提供拍摄用船只（快艇）一艘"],
   ["帆船","安全保卫部","无人机申请","电视转播需申请无人机用于拍摄"],
   ["帆船","场馆和城市形象部","其他",""]
-];
+  ["帆船","主播机构","设备进场时间",""],
+  ["帆船","主播机构","开始供电时间",""],];
 
 const SPORTS=[...new Set(RAW.map(r=>r[0]))];
 const DEPTS=[...new Set(RAW.map(r=>r[1]))];
 const H=React.createElement;
+
+function exportExcel(tasks){
+  const rows=tasks.map(t=>({
+    "赛种":t.sport,"协调部门":t.dept,"科目":t.category,"具体内容":t.detail,
+    "状态":t.status==="pending"?"待完成":t.status==="completed"?"已完成":"已中止",
+    "截止日期":t.deadline||"","设备进场时间":t.equipment_date||"","开始供电时间":t.power_date||"",
+    "跟进记录·Jamie":t.jamie_notes||"","跟进记录·Lan":t.lan_notes||""
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"转播需求");
+  // Set column widths
+  ws["!cols"]=[{wch:12},{wch:16},{wch:12},{wch:40},{wch:8},{wch:12},{wch:12},{wch:12},{wch:25},{wch:25}];
+  XLSX.writeFile(wb,"转播需求任务追踪.xlsx");
+}
+
+function exportPDF(tasks){
+  const win=window.open("","_blank");
+  const rows=tasks.map(t=>`
+    <tr style="border-bottom:1px solid #e2e8f0;${t.dept==="主播机构"?"background:#fef9c3;":""}">
+      <td style="padding:6px 8px;white-space:nowrap">${t.sport}</td>
+      <td style="padding:6px 8px;white-space:nowrap">${t.dept}</td>
+      <td style="padding:6px 8px;white-space:nowrap">${t.category}</td>
+      <td style="padding:6px 8px;max-width:300px">${t.detail||""}</td>
+      <td style="padding:6px 8px;white-space:nowrap">${t.status==="pending"?"待完成":t.status==="completed"?"已完成":"已中止"}</td>
+      <td style="padding:6px 8px;white-space:nowrap">${t.deadline||"—"}</td>
+      <td style="padding:6px 8px;white-space:nowrap">${t.equipment_date||"—"}</td>
+      <td style="padding:6px 8px;white-space:nowrap">${t.power_date||"—"}</td>
+      <td style="padding:6px 8px">${t.jamie_notes||"—"}</td>
+      <td style="padding:6px 8px">${t.lan_notes||"—"}</td>
+    </tr>`).join("");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>转播需求任务追踪</title>
+    <style>
+      body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:11px;margin:16px}
+      h2{margin-bottom:12px;font-size:16px}
+      table{border-collapse:collapse;width:100%}
+      th{background:#f8fafc;padding:7px 8px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;font-size:11px;color:#64748b}
+      td{font-size:11px;vertical-align:top;word-break:break-all}
+      @media print{@page{size:A3 landscape;margin:10mm}}
+    </style>
+  </head><body>
+    <h2>第六届亚洲沙滩运动会 · 转播需求任务追踪</h2>
+    <table>
+      <thead><tr>
+        <th>赛种</th><th>协调部门</th><th>科目</th><th>具体内容</th><th>状态</th>
+        <th>截止日期</th><th>设备进场</th><th>开始供电</th><th>跟进·Jamie</th><th>跟进·Lan</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>win.print(),500);
+}
 
 function sbApi(){
   const base=SB_URL+"/rest/v1/broadcast_tasks";
@@ -199,7 +267,11 @@ function App(){
           H("div",{style:{fontSize:11,letterSpacing:3,color:"#94a3b8",marginBottom:3}},"第六届亚洲沙滩运动会 · 主播机构二次考察跟进台账"),
           H("h1",{style:{margin:0,fontSize:mob?17:21,fontWeight:700,color:"#0f172a"}},"转播需求任务追踪")
         ),
-        statCards
+        H("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
+          statCards,
+          H("button",{onClick:()=>exportExcel(tasks),style:{background:"#16a34a",color:"#fff",border:"none",borderRadius:7,padding:"7px 14px",cursor:"pointer",fontSize:13,fontWeight:600,whiteSpace:"nowrap"}},"⬇ Excel"),
+          H("button",{onClick:()=>exportPDF(tasks),style:{background:"#dc2626",color:"#fff",border:"none",borderRadius:7,padding:"7px 14px",cursor:"pointer",fontSize:13,fontWeight:600,whiteSpace:"nowrap"}},"⬇ PDF")
+        )
       )
     )
   );
@@ -354,7 +426,7 @@ function App(){
               const sc=STATUS_CFG[task.status]||STATUS_CFG.pending;
               const dpc=dc(task.dept);
               const isOther=task.category==="其他";
-              return H("tr",{key:task.id,style:{borderBottom:"1px solid #f1f5f9",background:task.dept==="主播机构"?"#fef08a":isOther?"#fffbeb":idx%2===0?"#fff":"#fafbfc",verticalAlign:"top"}},
+              return H("tr",{key:task.id,style:{borderBottom:"1px solid #f1f5f9",borderTop:task.dept==="主播机构"&&task.category==="设备进场时间"?"3px solid #eab308":"none",background:task.dept==="主播机构"?"#fef9c3":isOther?"#fffbeb":idx%2===0?"#fff":"#fafbfc",verticalAlign:"top"}},
                 H("td",{style:{padding:"10px 14px",whiteSpace:"nowrap",fontWeight:500,color:"#334155"}},task.sport),
                 H("td",{style:{padding:"10px 14px",whiteSpace:"nowrap"}},
                   isE&&isOther
@@ -365,7 +437,9 @@ function App(){
                 ),
                 H("td",{style:{padding:"10px 14px",whiteSpace:"nowrap",color:isOther?"#d97706":"#64748b",fontWeight:isOther?600:400}},task.category),
                 H("td",{style:{padding:"10px 14px",color:"#334155",lineHeight:1.6,minWidth:200,maxWidth:380}},
-                  isE&&isOther
+                  isE&&task.dept==="主播机构"
+                  ?H("input",{type:"date",value:editData.detail||"",onChange:e=>setEditData(p=>({...p,detail:e.target.value})),style:{...inpSt,width:160,boxSizing:"border-box"}})
+                  :isE&&isOther
                   ?H("input",{value:editData.detail||"",onChange:e=>setEditData(p=>({...p,detail:e.target.value})),placeholder:"填写其他内容…",style:{...inpSt,width:"100%",boxSizing:"border-box"}})
                   :task.detail||H("span",{style:{color:"#cbd5e1"}},"—")
                 ),
